@@ -1,20 +1,9 @@
-document.onreadystatechange = function () {
-	var state = document.readyState
-	if (state == 'interactive') {
-		document.getElementById('main').style.visibility="hidden";
-	} else if (state == 'complete') {		
-		document.getElementById('preloader').style.visibility="hidden";
-		document.getElementById('main').style.visibility="visible";
-	}
-  }
-
 //-------------------
 // GLOBAL variables
 //-------------------
 let model;
 
-var canvasWidth           	= 150;
-var canvasHeight 			= 150;
+var canvasSize           	= 150;
 var canvasStrokeStyle		= "white";
 var canvasLineJoin			= "round";
 var canvasLineWidth       	= 5;
@@ -26,19 +15,14 @@ var clickY = new Array();
 var clickD = new Array();
 var drawing;
 
-//document.getElementById('chart_box').innerHTML = "";
-//$('#chart_box').hide();
-$('#main').hide();
-$('#result_box').hide();
-
 //---------------
 // Create canvas
 //---------------
 var canvasBox = document.getElementById('canvas_box');
 var canvas    = document.createElement("canvas");
 
-canvas.setAttribute("width", canvasWidth);
-canvas.setAttribute("height", canvasHeight);
+canvas.setAttribute("width", canvasSize);
+canvas.setAttribute("height", canvasSize);
 canvas.setAttribute("id", canvasId);
 canvas.style.backgroundColor = canvasBackgroundColor;
 canvasBox.appendChild(canvas);
@@ -160,7 +144,8 @@ function addUserGesture(x, y, dragging) {
 // RE DRAW function
 //-------------------
 function drawOnCanvas() {
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+	var size = $("#slider").val();
+	ctx.clearRect(0, 0, size, size);
 
 	ctx.strokeStyle = canvasStrokeStyle;
 	ctx.lineJoin    = canvasLineJoin;
@@ -183,13 +168,14 @@ function drawOnCanvas() {
 // CLEAR CANVAS function
 //------------------------
 $("#clear-button").click(async function () {
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+	var size = $("#slider").val();
+    ctx.clearRect(0, 0, size, size);
 	clickX = new Array();
 	clickY = new Array();
 	clickD = new Array();
 	$(".prediction-text").empty();
 	$(".percentage-text").empty();
-	$("#result_box").addClass('d-none');
+	$("#result_box").hide();
 	$("#helperText").show();
 });
 
@@ -205,12 +191,12 @@ async function loadModel() {
   // load the model using a HTTPS request (where you have stored your model files)
   model = await tf.loadLayersModel("models/handwritingRecognitionModel.json");
   console.log(model.summary);
-  //$("#loaderText").html("MODEL LOADED!");
-  $('#main').show();
-  $('#preloader').hide();
-  $('#preloader').removeClass("d-flex");
+  
+  $('#preloader').hide();    
+  $("#helperText").show();
+  $('#predict-button').prop('disabled', false);
 }
-
+		
 loadModel();
 
 //-----------------------------------------------
@@ -228,33 +214,80 @@ function preprocessCanvas(image) {
 	return tensor.div(255.0);
 }
 
+//-----------------------------------------------
+// check if canvas is blank
+//-----------------------------------------------
+function isCanvasBlank() {  
+	// returns true if every pixel's uint32 representation is 0 (or "blank")
+	const pixelBuffer = new Uint32Array(
+		ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+	);
+  
+	return !pixelBuffer.some(color => color !== 0);
+  }
+
 //--------------------------------------------
 // predict function 
 //--------------------------------------------
 $("#predict-button").click(async function () {
     // get image data from canvas
-	var imageData = canvas.toDataURL();
+	// var imageData = canvas.toDataURL('image/png');
+	// console.log(imageData);
 
-	// preprocess canvas
-	let tensor = preprocessCanvas(canvas);
+	if(!isCanvasBlank()){
+		// preprocess canvas
+		let tensor = preprocessCanvas(canvas);
 
-	// make predictions on the preprocessed image tensor
-	let predictions = await model.predict(tensor).data();
+		// make predictions on the preprocessed image tensor
+		let predictions = await model.predict(tensor).data();
 
-	// get the model's prediction results
-	let results = Array.from(predictions);
+		// get the model's prediction results
+		let results = Array.from(predictions);
 
-	// display the predictions in chart
-	$("#helperText").hide();
-	$("#result_box").removeClass('d-none');
-	$("#result_box").show();
+		// display the predictions in chart
+		$("#helperText").hide();
+		$("#result_box").removeClass('d-none');
+		$("#result_box").show();
 
-	//displayChart(results);
-	displayLabel(results);
+		//displayChart(results);
+		displayLabel(results);
 
-	console.log(results);
+		console.log(results);
+	}
+	else{
+		alert("Please draw a digit in the canvas!");
+	}
 });
 
+//--------------------------------------------
+// display prediction 
+//--------------------------------------------
+function displayLabel(data) {
+	var max = data[0];
+    var maxIndex = 0;
+
+    for (var i = 1; i < data.length; i++) {
+        if (data[i] > max) {
+            maxIndex = i;
+            max = data[i];
+        }
+    }
+	$(".prediction-text").html(maxIndex)
+	$(".percentage-text").html(Math.trunc(max*100)+"&percnt;");
+}
+
+// canvas cannot be maximized to more value in phones
+if($(window).width() < 450){
+	slider.max = 200;
+}
+
+// change canvas size based on slider value
+$("#slider").on('input', function() {
+	canvas.setAttribute("width", this.value);
+	canvas.setAttribute("height", this.value);
+});
+
+/*
 //------------------------------
 // Chart to display predictions
 //------------------------------
@@ -300,17 +333,4 @@ function displayChart(data) {
 	}
 	$('#chart_box').show();
 }
-
-function displayLabel(data) {
-	var max = data[0];
-    var maxIndex = 0;
-
-    for (var i = 1; i < data.length; i++) {
-        if (data[i] > max) {
-            maxIndex = i;
-            max = data[i];
-        }
-    }
-	$(".prediction-text").html(maxIndex)
-	$(".percentage-text").html("Percentage prediction: "+Math.trunc(max*100)+"&percnt;");
-}
+*/
