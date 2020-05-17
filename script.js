@@ -99,7 +99,7 @@ async function train(model, data) {
   };
   //const fitCallbacks = tfvis.show.fitCallbacks(container, metrics);
   
-  const BATCH_SIZE = 512;
+  const BATCH_SIZE = 64;
   const TRAIN_DATA_SIZE = 5500;
   const TEST_DATA_SIZE = 1000;
 
@@ -122,7 +122,7 @@ async function train(model, data) {
   return model.fit(trainXs, trainYs, {
     batchSize: BATCH_SIZE,
     validationData: [testXs, testYs],
-    epochs: 10,
+    epochs: 500,
     shuffle: true,
     //callbacks: fitCallbacks
   });
