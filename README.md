@@ -13,6 +13,14 @@ Handwriting recognition of numeric digits with TensorFlowJS
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
+## Setup for Contributors
+* Go through this [Google Codelab](https://codelabs.developers.google.com/codelabs/tfjs-training-classfication) if you are new to tensorflow and machine learning in general like me!
+* Check out `data.js` to know how the data has been fetched, and other helper functions to fetch data from the dataset during training.
+* Check out `script.js` to see the backbone of this project: how model is created, training is done etc. Optimizations are most welcome!
+* Try out `saveModel.html` to save the model in a json file to be used when we predict user drawing.
+* Check out `digit_recognition.js` to see how the saved model is used to predict the digit drawn on the canvas in `index.html`
+* `digit.css` for styling the main page
+
 ## TODO
 - [x] Make drawing canvas resizable
 - [ ] Make predictions more accurate
